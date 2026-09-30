@@ -1,0 +1,105 @@
+Building configuration...
+
+Current configuration : 1712 bytes
+!
+! Last configuration change at 14:55:18 UTC Wed Sep 30 2026
+!
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+!
+hostname EDGE-CISCO
+!
+boot-start-marker
+boot-end-marker
+!
+!
+no logging console
+!
+no aaa new-model
+!
+!
+!
+ip dhcp excluded-address 172.23.16.1 172.23.16.9
+ip dhcp excluded-address 172.23.16.121 172.23.16.127
+!
+ip dhcp pool VLAN10-USUARIOS
+ network 172.23.16.0 255.255.255.128
+ default-router 172.23.16.1
+ dns-server 8.8.8.8
+!
+!
+!
+no ip domain lookup
+ip cef
+no ipv6 cef
+!
+!
+multilink bundle-name authenticated
+!
+!
+crypto isakmp policy 10
+ authentication pre-share
+ group 14
+crypto isakmp key ***** address 200.23.16.6
+!
+!
+crypto ipsec transform-set TS-DES esp-des esp-sha-hmac
+ mode tunnel
+!
+!
+!
+crypto map MAPA-VPN 10 ipsec-isakmp
+ set peer 200.23.16.6
+ set transform-set TS-DES
+ set pfs group14
+ match address VPN-A-FGT
+!
+!
+!
+!
+!
+interface FastEthernet0/0
+ ip address 200.23.16.2 255.255.255.252
+ ip nat outside
+ duplex full
+ crypto map MAPA-VPN
+!
+interface FastEthernet1/0
+ no ip address
+ duplex full
+!
+interface FastEthernet1/0.10
+ encapsulation dot1Q 10
+ ip address 172.23.16.1 255.255.255.128
+ ip nat inside
+!
+ip nat inside source list NAT-USUARIOS interface FastEthernet0/0 overload
+ip forward-protocol nd
+!
+!
+no ip http server
+no ip http secure-server
+ip route 0.0.0.0 0.0.0.0 200.23.16.1
+!
+ip access-list extended NAT-USUARIOS
+ deny   ip 172.23.16.0 0.0.0.127 172.23.16.128 0.0.0.15
+ permit ip 172.23.16.0 0.0.0.127 any
+ip access-list extended VPN-A-FGT
+ permit ip 172.23.16.0 0.0.0.127 172.23.16.128 0.0.0.15
+!
+!
+!
+!
+control-plane
+!
+!
+line con 0
+ stopbits 1
+line aux 0
+ stopbits 1
+line vty 0 4
+ login
+!
+!
+end

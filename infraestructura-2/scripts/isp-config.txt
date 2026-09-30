@@ -1,0 +1,39 @@
+! =====================================================================
+! ISP - Cisco C2691 (Dynamips) - Infraestructura 2
+! Abdul Djalo - 2023-1600
+! Misma configuracion que en la Infraestructura 1, mas duplex full
+! en fa0/1 para corregir el duplex mismatch con EDGE-CISCO.
+! =====================================================================
+enable
+configure terminal
+hostname ISP
+no ip domain-lookup
+!
+interface fa0/0
+ ip address 192.168.100.252 255.255.255.0
+ ip nat outside
+ no shutdown
+ exit
+!
+! --- Enlace publico hacia EDGE-CISCO ---
+interface fa0/1
+ ip address 200.23.16.1 255.255.255.252
+ ip nat inside
+ duplex full
+ no shutdown
+ exit
+!
+! --- Enlace publico hacia el FortiGate ---
+interface fa1/0
+ ip address 200.23.16.5 255.255.255.252
+ ip nat inside
+ no shutdown
+ exit
+!
+ip route 0.0.0.0 0.0.0.0 192.168.100.1
+access-list 101 deny ip 200.23.16.0 0.0.0.7 192.168.100.0 0.0.0.255
+access-list 101 permit ip 200.23.16.0 0.0.0.7 any
+ip nat inside source list 101 interface fa0/0 overload
+!
+end
+write memory

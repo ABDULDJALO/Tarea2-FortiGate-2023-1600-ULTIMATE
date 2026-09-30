@@ -1,0 +1,69 @@
+Building configuration...
+
+Current configuration : 1099 bytes
+!
+version 12.4
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname ISP
+!
+boot-start-marker
+boot-end-marker
+!
+!
+no aaa new-model
+memory-size iomem 5
+ip cef
+!
+!
+ip auth-proxy max-nodata-conns 3
+ip admission max-nodata-conns 3
+!
+!
+no ip domain lookup
+!
+!
+interface FastEthernet0/0
+ ip address 192.168.100.252 255.255.255.0
+ ip nat outside
+ ip virtual-reassembly
+ duplex auto
+ speed auto
+!
+interface FastEthernet0/1
+ ip address 200.23.16.1 255.255.255.252
+ ip nat inside
+ ip virtual-reassembly
+ speed auto
+ full-duplex
+!
+interface FastEthernet1/0
+ ip address 200.23.16.5 255.255.255.252
+ ip nat inside
+ ip virtual-reassembly
+ duplex auto
+ speed auto
+!
+ip forward-protocol nd
+ip route 0.0.0.0 0.0.0.0 192.168.100.1
+!
+ip http server
+no ip http secure-server
+ip nat inside source list 101 interface FastEthernet0/0 overload
+!
+access-list 101 deny   ip 200.23.16.0 0.0.0.7 192.168.100.0 0.0.0.255
+access-list 101 permit ip 200.23.16.0 0.0.0.7 any
+!
+!
+control-plane
+!
+!
+line con 0
+line aux 0
+line vty 0 4
+ login
+!
+!
+end

@@ -1,0 +1,92 @@
+! =====================================================================
+! EDGE-CISCO - Cisco c7200 (IOS 15.2) - Infraestructura 2
+! Abdul Djalo - 2023-1600
+! Comandos ejecutados en la consola del router, uno por uno.
+! Hardware: C7200-IO-FE (fa0/0) + PA-FE-TX en slot 1 (fa1/0)
+! =====================================================================
+enable
+configure terminal
+hostname EDGE-CISCO
+no ip domain-lookup
+!
+! --- WAN hacia el ISP ---
+interface fa0/0
+ ip address 200.23.16.2 255.255.255.252
+ ip nat outside
+ duplex full
+ no shutdown
+ exit
+!
+! --- LAN: sub-interfaz 802.1Q para la VLAN 10 ---
+interface fa1/0
+ no ip address
+ no shutdown
+ exit
+interface fa1/0.10
+ encapsulation dot1Q 10
+ ip address 172.23.16.1 255.255.255.128
+ ip nat inside
+ exit
+!
+! --- DHCP para usuarios (rango .10 - .120) ---
+ip dhcp excluded-address 172.23.16.1 172.23.16.9
+ip dhcp excluded-address 172.23.16.121 172.23.16.127
+ip dhcp pool VLAN10-USUARIOS
+ network 172.23.16.0 255.255.255.128
+ default-router 172.23.16.1
+ dns-server 8.8.8.8
+ exit
+!
+! --- Ruta por defecto ---
+ip route 0.0.0.0 0.0.0.0 200.23.16.1
+!
+! --- NAT con exencion para el trafico de la VPN ---
+ip access-list extended NAT-USUARIOS
+ deny   ip 172.23.16.0 0.0.0.127 172.23.16.128 0.0.0.15
+ permit ip 172.23.16.0 0.0.0.127 any
+ exit
+ip nat inside source list NAT-USUARIOS interface fa0/0 overload
+!
+! --- VPN IPsec: Fase 1 (IKEv1) ---
+crypto isakmp policy 10
+ encryption des
+ hash sha
+ authentication pre-share
+ group 14
+ lifetime 86400
+ exit
+crypto isakmp key <CLAVE-PRECOMPARTIDA> address 200.23.16.6
+!
+! --- VPN IPsec: Fase 2 ---
+crypto ipsec transform-set TS-DES esp-des esp-sha-hmac
+ mode tunnel
+ exit
+!
+! --- Trafico interesante (debe reflejar los selectores del FortiGate) ---
+ip access-list extended VPN-A-FGT
+ permit ip 172.23.16.0 0.0.0.127 172.23.16.128 0.0.0.15
+ exit
+!
+! --- Crypto map aplicado a la WAN ---
+crypto map MAPA-VPN 10 ipsec-isakmp
+ set peer 200.23.16.6
+ set transform-set TS-DES
+ set pfs group14
+ match address VPN-A-FGT
+ exit
+interface fa0/0
+ crypto map MAPA-VPN
+ exit
+!
+! --- Evita que los mensajes de log corten los comandos en consola ---
+no logging console
+!
+end
+write memory
+!
+! --- Verificacion ---
+! show ip interface brief
+! show ip dhcp binding
+! show crypto isakmp sa          (estado QM_IDLE = fase 1 activa)
+! show crypto ipsec sa | include pkts   (encaps/decaps > 0)
+! clear crypto sa                (borra las SA para la demostracion)

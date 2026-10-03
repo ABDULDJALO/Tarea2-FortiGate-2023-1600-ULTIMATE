@@ -2,6 +2,8 @@
 
 **Estudiante:** Abdul Djalo · **Matrícula:** 2023-1600
 
+https://youtu.be/Y1QGfokBAL0
+
 ## 1. Propósito
 
 Comunicar un **usuario** y un **servidor web HTTPS** ubicados en dos sitios distintos a través de un **túnel VPN IPsec site-to-site entre equipos de fabricantes diferentes**: un router **Cisco** en el sitio del usuario y un **FortiGate** en el sitio del servidor. El laboratorio demuestra la interoperabilidad de IPsec entre ambos fabricantes y que **la comunicación solo fluye mientras el túnel VPN está activo**.

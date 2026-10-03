@@ -1,0 +1,6 @@
+auto lo
+iface lo inet loopback
+auto eth0
+iface eth0 inet manual
+auto eth0.10
+iface eth0.10 inet dhcp

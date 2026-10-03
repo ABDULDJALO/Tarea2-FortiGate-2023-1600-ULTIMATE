@@ -1,0 +1,51 @@
+! =====================================================================
+! EDGE-CISCO - Cisco C2691 (IOS 12.4) - Infraestructura 3
+! Abdul Djalo - 2023-1600
+! En esta infraestructura el Cisco solo enruta, da DHCP y hace NAT.
+! La VPN la establece el PC del usuario directamente con el FortiGate.
+! WAN: fa0/0   LAN: fa0/1 (sub-interfaz VLAN 10)
+! =====================================================================
+enable
+configure terminal
+hostname EDGE-CISCO
+no ip domain-lookup
+line con 0
+ logging synchronous
+ exit
+!
+interface fa0/0
+ ip address 200.23.16.2 255.255.255.252
+ ip nat outside
+ speed 100
+ duplex full
+ no shutdown
+ exit
+!
+interface fa0/1
+ no ip address
+ no shutdown
+ exit
+interface fa0/1.10
+ encapsulation dot1Q 10
+ ip address 172.23.16.1 255.255.255.128
+ ip nat inside
+ exit
+!
+ip dhcp excluded-address 172.23.16.1 172.23.16.9
+ip dhcp excluded-address 172.23.16.121 172.23.16.127
+ip dhcp pool VLAN10-USUARIOS
+ network 172.23.16.0 255.255.255.128
+ default-router 172.23.16.1
+ dns-server 8.8.8.8
+ exit
+!
+ip route 0.0.0.0 0.0.0.0 200.23.16.1
+access-list 1 permit 172.23.16.0 0.0.0.127
+ip nat inside source list 1 interface fa0/0 overload
+end
+write memory
+!
+! --- Verificacion ---
+! show cdp neighbors
+! show ip interface brief
+! show ip dhcp binding
